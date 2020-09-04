@@ -1,89 +1,111 @@
-import pyttsx3
-import random
-import os
+from functools import partial
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QGridLayout, QLineEdit, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PySide2.QtGui import QIcon, QFont, QColor, QPalette
 
-os.system('color 6')
-
-#  pyttsx3 configuration
-engine = pyttsx3.init('sapi5')
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
-engine.setProperty('rate', 175)
+error_msg = "Error..."
 
 
-def speak(audio):
-    print(audio)
-    engine.say(audio)
-    engine.runAndWait()
+class Calculator(QMainWindow):
+    def __init__(self):
+        super(Calculator, self).__init__()
+        self.setWindowTitle("Calculator")
+        self.setWindowIcon(QIcon('arti.PNG'))
+        self.setFont(QFont('Roboto', 12))
+        palette = QPalette()
+        palette.setColor(palette.Window, QColor('#000000'))
+        palette.setColor(palette.WindowText, QColor('#FFFFFF'))
+        self.setPalette(palette)
+        self.setGeometry(300, 300, 300, 300)
+        self.generalLayout = QVBoxLayout()
+        self._centralWidget = QWidget(self)
+        self.setCentralWidget(self._centralWidget)
+        self._centralWidget.setLayout(self.generalLayout)
+        self._createDisplay()
+        self._createButtons()
+
+    def _createDisplay(self):
+        self.display = QLineEdit()
+        self.display.setFixedHeight(45)
+        self.display.setAlignment(Qt.AlignRight)
+        self.display.setReadOnly(True)
+        self.generalLayout.addWidget(self.display)
+
+    def _createButtons(self):
+        self.buttons = {}
+        buttons_layout = QGridLayout()
+        buttons = {"7": (0, 0),
+                   "8": (0, 1),
+                   "9": (0, 2),
+                   "/": (0, 3),
+                   "C": (0, 4),
+                   "4": (1, 0),
+                   "5": (1, 1),
+                   "6": (1, 2),
+                   "*": (1, 3),
+                   "(": (1, 4),
+                   "1": (2, 0),
+                   "2": (2, 1),
+                   "3": (2, 2),
+                   "-": (2, 3),
+                   ")": (2, 4),
+                   "0": (3, 0),
+                   "00": (3, 1),
+                   ".": (3, 2),
+                   "+": (3, 3),
+                   "=": (3, 4),
+                   }
+        for btnText, pos in buttons.items():
+            self.buttons[btnText] = QPushButton(btnText)
+            self.buttons[btnText].setFixedSize(40, 40)
+            buttons_layout.addWidget(self.buttons[btnText], pos[0], pos[1])
+        self.generalLayout.addLayout(buttons_layout)
 
 
-print()
-speak('Welcome to the calculator.')
+
+    def setDisplayText(self, text):
+        self.display.setText(text)
+        self.display.setFocus()
+
+    def displayText(self):
+        return self.display.text()
+
+    def clearDisplay(self):
+        self.setDisplayText("")
 
 
-def add(x, y):
-    return x + y
+# Create a Model to handle the calculator's operation
+def evaluateExpression(expression):
+    try:
+        result = str(eval(expression, {}, {}))
+    except Exception:
+        result = error_msg
+
+    return result
 
 
-def subtract(x, y):
-    return x - y
+class Controller:
+    def __init__(self, model, view):
+        self._evaluate = model
+        self._view = view
+        self._connectSignals()
 
+    def _calculateResult(self):
+        result = self._evaluate(expression=self._view.displayText())
+        self._view.setDisplayText(result)
 
-def multiply(x, y):
-    return x * y
+    def _buildExpression(self, sub_exp):
+        if self._view.displayText() == error_msg:
+            self._view.clearDisplay()
 
+        expression = self._view.displayText() + sub_exp
+        self._view.setDisplayText(expression)
 
-def divide(x, y):
-    return x / y
+    def _connectSignals(self):
+        for btnText, btn in self._view.buttons.items():
+            if btnText not in {"=", "C"}:
+                btn.clicked.connect(partial(self._buildExpression, btnText))
 
-
-def remainder(x, y):
-    return x % y
-
-
-def exponent(x, y):
-    return x ** y
-
-
-speak("Select operation.")
-print("1. Add")
-print("2. Subtract")
-print("3. Multiply")
-print("4. Divide")
-print("5. Remainder")
-print("6. Power")
-
-print()
-# Take input from the user
-choice = input("Enter choice (1/2/3/4/5/6): \n >>>  ")
-
-if choice in ('1', '2', '3', '4', '5'):
-    num1 = float(input("Enter first number: \n >>> "))
-    num2 = float(input("Enter second number: \n >>> "))
-
-    if choice == '1':
-        speak(add(num1, num2))
-
-    elif choice == '2':
-        speak((num1, num2))
-
-    elif choice == '3':
-        speak(multiply(num1, num2))
-
-    elif choice == '4':
-        speak(divide(num1, num2))
-
-    elif choice == '5':
-        speak(remainder(num1, num2))
-
-    else:
-        speak("Invalid Input")
-
-elif choice == '6':
-    number1 = float(input('Enter the number: \n >>> '))
-    power = float(input('Enter to which power you want to multiply. \n >>> '))
-    speak(exponent(number1, power))
-
-print()
-speak('You are now being redirected to the main file.')
-print()
+        self._view.buttons["="].clicked.connect(self._calculateResult)
+        self._view.display.returnPressed.connect(self._calculateResult)
+        self._view.buttons["C"].clicked.connect(self._view.clearDisplay)

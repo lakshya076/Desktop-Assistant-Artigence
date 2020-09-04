@@ -3,6 +3,7 @@ import pyttsx3
 from turtle import Turtle, Screen
 from random import randint, choice
 import turtle
+print()
 
 # pyttsx3 config
 engine = pyttsx3.init('sapi5')
@@ -19,7 +20,6 @@ def speak(audio):
 
 print()
 speak('Welcome to Pong.')
-speak('Connection successfully established. You may play now.')
 
 pygame.init()
 
