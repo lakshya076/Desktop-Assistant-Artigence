@@ -1,394 +1,434 @@
+from PySide2.QtCore import QRect, QSize, Qt
+from PySide2.QtGui import QCursor, QFont, QIcon, QPalette, QColor, QKeySequence
+from PySide2.QtWidgets import QPushButton, QLabel, QLineEdit, QApplication, QFrame, QMenu, QMenuBar, QMainWindow, \
+    QAction
 import pyttsx3
 import wikipedia
 import webbrowser
 import os
 import sys
 import pyjokes
-from tkinter.filedialog import askdirectory
-from datetime import datetime, date
+from datetime import datetime
 import random
 import wolframalpha
-import time
-import pymongo
-from re import search
-import smtplib
-
-os.system('color 6')
-
-engine = pyttsx3.init('sapi5')
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
-engine.setProperty('rate', 175)
 
 
-def speak(audio):
-    print(audio)
-    engine.say(audio)
-    engine.runAndWait()
+class Artigence(QMainWindow):
+    def __init__(self):
+        super(Artigence, self).__init__()
 
+        # Basic Settings
+        self.setGeometry(300, 200, 682, 422)
+        self.setMinimumSize(QSize(682, 422))
+        self.setMaximumSize(QSize(682, 422))
+        self.setWindowIcon(QIcon("arti.PNG"))
+        self.setWindowTitle("Artigence Home")
 
-def speak_without_print(audio_which_will_not_be_printed):
-    engine.say(audio_which_will_not_be_printed)
-    engine.runAndWait()
+        # Color Scheme
+        self.palette = QPalette()
+        self.palette.setColor(self.palette.Window, QColor('#000000'))
+        self.palette.setColor(self.palette.WindowText, QColor('#FFFFFF'))
+        self.setPalette(self.palette)
 
+        self.light_palette = QPalette()
+        self.light_palette.setColor(self.light_palette.Window, QColor('#FFFFFF'))
+        self.light_palette.setColor(self.light_palette.WindowText, QColor('#000000'))
 
-def start():
-    client = pymongo.MongoClient("mongodb+srv://user:craptoshower@python-interactive-ai-e.brsnc.mongodb.net/Profiles"
-                                 "?retryWrites=true&w=majority")
+        # Setting MenuBar
+        self.menubar = QMenuBar(self)
+        self.menubar.setGeometry(0, 0, 682, 21)
 
-    database = client.get_database('Profiles')
-    records = database.Names_and_Passwords
+        self.date_menu = QMenu(self.menubar)
+        self.date_menu.setTitle(str(datetime.now().strftime('%d-%m-%Y')))
 
-    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        self.theme_menu = QMenu(self.menubar)
+        self.theme_menu.setTitle('Theme')
 
+        self.dark_theme = QAction('Dark Theme')
+        self.dark_theme.setShortcut(QKeySequence('Ctrl+Shift+D'))
+        self.theme_menu.addAction(self.dark_theme)
+        self.dark_theme.triggered.connect(lambda: self.dark())
 
-    class LoginOrRegister:
-        speak('Do you want to login or register?')
-        print('Please type the text "login" or "register" below as per your requirements.')
-        response = input('Login or Register: \n >>> ')
+        self.light_theme = QAction('Light Theme')
+        self.light_theme.setShortcut(QKeySequence('Ctrl+Shift+L'))
+        self.theme_menu.addAction(self.light_theme)
+        self.light_theme.triggered.connect(lambda: self.light())
 
-    class User:
-        username = input('Enter Username \n >>> ')
-        email = input('Enter Email Address \n >>> ')
+        self.app_menu = QMenu(self.menubar)
+        self.app_menu.setTitle('Apps')
 
-        # Create the user object
-        user = {
-            "name": username,
-            "email": email
-        }
+        self.calculator_menu = QAction('Calculator')
+        self.calculator_menu.setShortcut(QKeySequence('Alt+C'))
+        self.app_menu.addAction(self.calculator_menu)
+        self.calculator_menu.triggered.connect(lambda: self.calculator_func())
 
-        def validate(self, email):
-            if search(regex, email):
-                speak("Email is Valid.")
-            else:
-                speak("Invalid Email. The program will end now. Restart the program and enter a valid email address.")
-                sys.exit()
+        self.game_menu = QAction('GameHub')
+        self.game_menu.setShortcut(QKeySequence('Alt+G'))
+        self.app_menu.addAction(self.game_menu)
+        self.game_menu.triggered.connect(lambda: self.games_func())
 
-    email_receivers = []
+        self.music_menu = QAction('Muse (Music)')
+        self.music_menu.setShortcut(QKeySequence('Alt+M'))
+        self.app_menu.addAction(self.music_menu)
+        self.music_menu.triggered.connect(lambda: self.music_func())
 
-    if LoginOrRegister.response.lower() == 'register':
-        registration_name = User.username
-        registration_mail = User.email
+        self.news_menu = QAction('News')
+        self.news_menu.setShortcut(QKeySequence('Alt+E'))
+        self.app_menu.addAction(self.news_menu)
+        self.news_menu.triggered.connect(lambda: self.news_func())
 
-        class_email = User()
-        speak('Validating Email Address.')
-        User.validate(self=class_email, email=registration_mail)
+        self.notepad_menu = QAction('Notepad')
+        self.notepad_menu.setShortcut(QKeySequence('Alt+N'))
+        self.app_menu.addAction(self.notepad_menu)
+        self.notepad_menu.triggered.connect(lambda: self.notepad_func())
 
-        speak('Authenticating Username.')
+        self.pronunciator = QAction('Pronunciator')
+        self.pronunciator.setShortcut(QKeySequence('Alt+P'))
+        self.app_menu.addAction(self.pronunciator)
+        self.pronunciator.triggered.connect(lambda: self.pronunciator_func())
 
-        # Check for existing username
-        if records.find_one({
-            "name": registration_name,
-            "email": registration_mail
-        }):
-            speak('Username or Email already in use. The program will end now. If you have already registered, please'
-                  ' restart the program and login with appropriate credentials.')
-            sys.exit()
+        self.translate_menu = QAction('Translate')
+        self.translate_menu.setShortcut(QKeySequence('Alt+T'))
+        self.app_menu.addAction(self.translate_menu)
+        self.translate_menu.triggered.connect(lambda: self.translate_func())
 
-        # Will register if username does not exist in database
-        elif records.insert_one(User.user):
-            speak('Registering...')
-            speak('Registered successfully.')
-            email_receivers.append(registration_mail)
-            speak(
-                'The program will end in 10 seconds. Till then please don\'t forcefully close the program. After '
-                'closing,'
-                ' Restart and login to enjoy my services.')
-            print('P.S. Check your mail inbox.')
+        self.weather_menu = QAction('Weather')
+        self.weather_menu.setShortcut(QKeySequence('Alt+W'))
+        self.app_menu.addAction(self.weather_menu)
+        self.weather_menu.triggered.connect(lambda: self.weather_func())
 
+        self.setMenuBar(self.menubar)
+        self.menubar.addAction(self.date_menu.menuAction())
+        self.menubar.addAction(self.theme_menu.menuAction())
+        self.menubar.addAction(self.app_menu.menuAction())
 
-    elif LoginOrRegister.response.lower() == 'login':
-        login_name = User.username
-        login_email = User.email
+        # Creating Widgets
+        self.query = QLineEdit(self)
+        self.query.setGeometry(QRect(20, 30, 451, 41))
+        self.query.setMinimumSize(QSize(451, 41))
+        self.query.setMaximumSize(QSize(451, 41))
+        self.query.setPlaceholderText("Enter your Query Here:")
+        self.query.setFont(QFont('Roboto', 16))
+        self.query.setClearButtonEnabled(True)
 
-        class_email = User()
-        speak('Validating Email Address.')
-        User.validate(self=class_email, email=login_email)
+        self.update = QPushButton(self)
+        self.update.setGeometry(QRect(491, 30, 171, 41))
+        self.update.setMinimumSize(QSize(1, 1))
+        self.update.setMaximumSize(QSize(171, 51))
+        self.update.setText("What's New in the Updates?")
+        self.update.setCursor(QCursor(Qt.PointingHandCursor))
 
-        user = records.find_one({
-            "name": login_name,
-            "email": login_email
-        })
+        self.suggestions = QLabel(self)
+        self.suggestions.setGeometry(QRect(20, 220, 111, 31))
+        self.suggestions.setMinimumSize(QSize(111, 31))
+        self.suggestions.setMaximumSize(QSize(111, 31))
+        self.suggestions.setText("Suggestions:")
+        self.suggestions.setFont(QFont('Roboto', 14))
 
-        speak('Authenticating Username.')
-        time.sleep(1)
+        self.chrome = QPushButton(self)
+        self.chrome.setGeometry(QRect(20, 260, 91, 31))
+        self.chrome.setCursor(QCursor(Qt.PointingHandCursor))
+        self.chrome.setText('Open Chrome')
 
-        if user:
-            speak('Appropriate Credentials entered.')
-            speak('You can proceed.')
-        else:
-            speak('Username or the Email incorrect.')
-            speak('The program will end now.')
-            sys.exit()
+        self.games = QPushButton(self)
+        self.games.setGeometry(QRect(420, 260, 91, 31))
+        self.games.setCursor(QCursor(Qt.PointingHandCursor))
+        self.games.setText('Games')
 
-    else:
-        speak('You have to login or register to enjoy my services.')
-        speak('I am not joking, this program is linked with a database in the cloud.')
-        speak('So, I can authenticate your ID, email and password.')
-        speak('Since you did not login or register, the program will end.')
-        speak('To use my services, restart the program and either login or register.')
-        sys.exit()
+        self.cmd = QPushButton(self)
+        self.cmd.setGeometry(QRect(160, 260, 91, 31))
+        self.cmd.setCursor(QCursor(Qt.PointingHandCursor))
+        self.cmd.setText('Open Cmd')
 
-    # Sending Welcome Email to the newly registered user.
-    # Email Account
-    email_sender_account = "bot.of.artigence@gmail.com"
-    email_sender_password = "artigenceisgood"
-    email_smtp_server = "smtp.gmail.com"
-    email_smtp_port = 587
+        self.joke = QPushButton(self)
+        self.joke.setGeometry(QRect(160, 310, 91, 31))
+        self.joke.setCursor(QCursor(Qt.PointingHandCursor))
+        self.joke.setText('Joke Please!!')
 
-    # Email Content
-    email_body = """Welcome to the Artigence Family.
-    Recently, you registered for my services and that shall be provided to you. 
-    We are the Artigence family and you are welcome here anytime. 
-    Even if you forget us, we will never forget you.
-    If you ever feel any issue with me or suspect that something is malfunctioning in me:
-     Please send me an email on this address as soon as possible.
-    Yours Sincerely, 
-        Artigence and Team."""
+        self.music = QPushButton(self)
+        self.music.setGeometry(QRect(290, 260, 91, 31))
+        self.music.setCursor(QCursor(Qt.PointingHandCursor))
+        self.music.setText('Music')
 
-    # login to email server
-    server = smtplib.SMTP(email_smtp_server, email_smtp_port)
-    server.starttls()
-    server.login(email_sender_account, email_sender_password)
+        self.youtube = QPushButton(self)
+        self.youtube.setGeometry(QRect(290, 310, 91, 31))
+        self.youtube.setCursor(QCursor(Qt.PointingHandCursor))
+        self.youtube.setText('Youtube')
 
-    server.sendmail(email_sender_account, User.email, email_body)
+        self.time = QPushButton(self)
+        self.time.setGeometry(QRect(20, 310, 91, 31))
+        self.time.setCursor(QCursor(Qt.PointingHandCursor))
+        self.time.setText('Tell Time')
 
-    # All emails sent, log out.
-    server.quit()
+        self.weather = QPushButton(self)
+        self.weather.setGeometry(QRect(420, 310, 91, 31))
+        self.weather.setCursor(QCursor(Qt.PointingHandCursor))
+        self.weather.setText('Weather')
 
+        self.calculator = QPushButton(self)
+        self.calculator.setGeometry(QRect(550, 260, 101, 31))
+        self.calculator.setCursor(QCursor(Qt.PointingHandCursor))
+        self.calculator.setText('Calculator')
 
-# A.I. will wish according to the hour with 'wish' function
-def wish():
+        self.wikipedia = QPushButton(self)
+        self.wikipedia.setGeometry(QRect(550, 310, 101, 31))
+        self.wikipedia.setCursor(QCursor(Qt.PointingHandCursor))
+        self.wikipedia.setText('India Wikipedia')
 
-    hour = int(datetime.now().hour)
-    if 0 <= hour < 12:
-        speak('Good Morning.')
-    elif 12 <= hour < 18:
-        speak('Good Afternoon.')
-    else:
-        speak('Good Evening.')
+        self.news = QPushButton(self)
+        self.news.setGeometry(QRect(20, 360, 91, 31))
+        self.news.setCursor(QCursor(Qt.PointingHandCursor))
+        self.news.setText('Latest News')
 
-    speak('I am Artigence.')
-    speak('How may I help you today?')
-    print()
-    speak('Now, you can type commands in any case (upper, lower or mixed case.)')
-    print('Write your commands when you see this sign ">>> "')
-    time.sleep(2)
-    print()
-    print('Suggestions: \n open chrome \n open cmd \n play music \n calculator \n play games \n tell me a joke \n '
-          'what is the time \n open my photos \n what is the weather \n salman khan wikipedia '
-          '\n open stack overflow \n what is the latest news \n meaning of obsolete (or any word) \n what is today\'s '
-          'date \n open translate')
-    print()
+        self.meaning = QPushButton(self)
+        self.meaning.setGeometry(QRect(420, 360, 231, 31))
+        self.meaning.setCursor(QCursor(Qt.PointingHandCursor))
+        self.meaning.setText('Meaning of Obsolete (or any word)')
 
+        self.harry_potter = QPushButton(self)
+        self.harry_potter.setGeometry(QRect(290, 360, 91, 31))
+        self.harry_potter.setCursor(QCursor(Qt.PointingHandCursor))
+        self.harry_potter.setText('Harry Potter')
 
-hello = ['Kon\'nichiwa', 'Ciao', 'Hola', 'Bonjour', 'Hello', 'Hi', 'Hiya']
-bye = ['Adios', 'Goodbye', 'Bye-Bye', 'See you next time.', 'Artigence Out.',
-       'It was nice talking to you sir. Have a nice day.']
+        self.translate = QPushButton(self)
+        self.translate.setGeometry(QRect(160, 360, 91, 31))
+        self.translate.setCursor(QCursor(Qt.PointingHandCursor))
+        self.translate.setText('Open Translate')
 
+        self.line = QFrame(self)
+        self.line.setGeometry(QRect(20, 200, 661, 16))
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
 
+        self.label = QLabel(self)
+        self.label.setGeometry(QRect(20, 100, 631, 91))
+        self.label.setFont(QFont('Roboto', 12))
+        self.label.setTextFormat(Qt.AutoText)
+        self.label.setWordWrap(True)
 
-if __name__ == '__main__':
-    start()
-    print()
-    print('What is updated in Version 1.3.3 ???\nNow you have to login or register to enjoy Atrigence\'s services.\nAll'
-          ' the profiles '
-          'stored in database in the cloud. So every user is authenticated before he/she is logged in.\nCommand color '
-          'changed.'
-          '\nFlexible and dynamic typing {meaning now you can type in any case (lower case, upper case or mixed case)}'
-          '\nMinor and major Bug Fixes.\nNo satellite connections required. Everything is saved on your device\nMusic '
-          'flexibility (now you can play music on either your pc or on the web'
-          'on Spotify or Gaana.\nNew feature in calculator: Now you can also calculate powers.\nNew Feature in Weather:'
-          ' Now you can view weather in celsius and fahrenheit unit.')
-    print()
-    wish()
-    while True:
-        user_query = input('>>> ').lower()  # Takes user_query in any alphabetical case
+        self.wish()
+
+        # Making the Widgets Functional
+        self.query.returnPressed.connect(lambda: self.on_enter())
+        self.query.returnPressed.connect(lambda: self.clear_text())
+
+        self.update.clicked.connect(lambda: self.update_func())
+        self.music.clicked.connect(lambda: self.music_func())
+        self.games.clicked.connect(lambda: self.games_func())
+        self.calculator.clicked.connect(lambda: self.calculator_func())
+        self.weather.clicked.connect(lambda: self.weather_func())
+        self.news.clicked.connect(lambda: self.news_func())
+        self.translate.clicked.connect(lambda: self.translate_func())
+        self.time.clicked.connect(lambda: self.time_func())
+        self.joke.clicked.connect(lambda: self.joke_func())
+        self.youtube.clicked.connect(lambda: self.youtube_func())
+        self.wikipedia.clicked.connect(lambda: self.wikipedia_func())
+        self.chrome.clicked.connect(lambda: self.chrome_func())
+        self.cmd.clicked.connect(lambda: self.cmd_func())
+        self.meaning.clicked.connect(lambda: self.meaning_func())
+        self.harry_potter.clicked.connect(lambda: self.potter_func())
+
+    def pronunciator_func(self):
+        self.speak('Opening Pronunciator')
+        from pronunciator import Pronunciator
+        self.pronunciator_win = Pronunciator()
+        self.pronunciator_win.show()
+
+    def pong_func(self):
+        import pong
+
+    def notepad_func(self):
+        self.speak('Opening Notepad')
+        from notepad import Notepad
+        self.notepad_win = Notepad()
+        self.notepad_win.show()
+
+    def update_func(self):
+        os.startfile('Each Version Updates.txt')
+
+    def translate_func(self):
+        self.speak('Opening Translate\nPlease Wait as opening Translate may take up to 4-5 seconds')
+        from translate import Translate
+        self.translate_win = Translate()
+        self.translate_win.show()
+
+    def games_func(self):
+        self.speak('Opening GameHub')
+        from games import GameHub
+        self.game_win = GameHub()
+        self.game_win.show()
+
+    def weather_func(self):
+        self.speak('Opening Weather.')
+        from weather import Weather
+        self.weather_win = Weather()
+        self.weather_win.show()
+
+    def music_func(self):
+        self.speak('Opening Muse')
+        from music import Music
+        self.music_win = Music()
+        self.music_win.show()
+
+    def calculator_func(self):
+        self.speak('Opening Calculator.')
+        from calculator import Calculator
+        self.calculator_win = Calculator()
+        self.calculator_win.show()
+
+    def news_func(self):
+        self.speak('Opening News.')
+        from news import News
+        self.news_win = News()
+        self.news_win.show()
+        self.speak('Welcome to News.\nThese are the latest international headlines according to BBC News Network.')
+
+    def chrome_func(self):
+        try:
+            chrome_path = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+            os.startfile(chrome_path)
+            self.speak('Opening Chrome.')
+        except Exception:
+            self.speak('No Google Chrome installation found on the host device.')
+
+    def cmd_func(self):
+        cmd_path = 'C:\\Windows\\system32\\cmd.exe'
+        os.startfile(cmd_path)
+        self.speak('Opening Command Prompt.')
+
+    def time_func(self):
+        question = 'time'
+        app_id = 'LLQ4QY-A7K3LEL4T8'
+        client = wolframalpha.Client(app_id)
+        res = client.query(question)
+        answer = next(res.results).text
+        self.speak(answer)
+
+    def joke_func(self):
+        self.speak(pyjokes.get_joke())
+
+    def youtube_func(self):
+        webbrowser.open('https://www.youtube.com')
+        self.speak('Opening Youtube.')
+
+    def wikipedia_func(self):
+        try:
+            self.speak('Searching Wikipedia. Please Wait...')
+            query = 'India'.replace('wikipedia', '')
+            result = wikipedia.summary(query, sentences=1)
+            self.speak('According to Wikipedia...')
+            self.speak(result)
+        except Exception as e:
+            self.speak(e)
+
+    def meaning_func(self):
+        question = 'obsolete'
+        app_id = 'LLQ4QY-A7K3LEL4T8'
+        client = wolframalpha.Client(app_id)
+        res = client.query(question)
+        answer = next(res.results).text
+        self.speak(answer)
+
+    def potter_func(self):
+        new = 2
+        google_url = "http://google.com/?#q="
+        webbrowser.open(google_url + 'Harry Potter', new=new)
+
+    def clear_text(self):
+        self.query.clear()
+
+    def on_enter(self):
+        user_query = self.query.text().lower()
 
         if 'wikipedia' in user_query:
-            print()
             try:
-                speak('Searching Wikipedia. Please Wait...')
+                self.speak('Searching Wikipedia. Please Wait...')
                 user_query = user_query.replace('wikipedia', '')
-                result = wikipedia.summary(user_query, sentences=2)
-                speak('According to Wikipedia...')
-                speak(result)
+                result = wikipedia.summary(user_query, sentences=1)
+                self.speak('According to Wikipedia...')
+                self.speak(result)
             except Exception as e:
-                speak('Please try again later.')
-                speak(e)
-            print()
+                self.speak('Please try again later.')
+                self.speak(e)
 
         elif 'youtube' in user_query:
-            print()
             webbrowser.open('https://www.youtube.com')
-            speak('Youtube opened.')
-            print()
+            self.speak('Opening Youtube.')
 
         elif 'google' in user_query:
-            print()
             webbrowser.open('https://www.google.com/')
-            speak('Google opened.')
-            print()
+            self.speak('Opening Google.')
 
-        elif 'stack overflow' in user_query:
-            print()
-            webbrowser.open('https://stackoverflow.com/')
-            speak('Stack overflow opened.')
-            print()
-
-        elif 'music' in user_query:
-            print()
-            speak('Do you want to hear music on your device or on the web.')
-            music_response = input('Type in web or pc in next line. \n >>> ').lower()
-
-            if music_response == 'pc':
-                speak('Please choose a directory from where the songs will be played.')
-                music_dir = askdirectory()
-                os.chdir(music_dir)
-                songs = os.listdir(music_dir)
-                speak('Playing your songs.')
-                os.startfile(os.path.join(music_dir, songs[0]))
-
-            elif music_response == 'web':
-                speak('Do you want to play on Gaana or Spotify.')
-                web_response = input('Please type in gaana or spotify in the next line. \n >>> ').lower()
-                print()
-                if web_response == 'gaana':
-                    gaana_url = 'https://gaana.com/search/'
-
-                    speak('Please search a song you want to play.')
-                    gaana_search = input('Enter the name of song. \n >>> ').lower()
-
-                    speak('Opening the song on Gaana.')
-                    webbrowser.open(gaana_url + gaana_search)
-                    speak('Now you can play your song')
-
-                elif web_response == 'spotify':
-                    spotify_url = 'https://open.spotify.com/search/'
-
-                    speak('Please search a song you want to play.')
-                    spotify_search = input('Enter the name of song. \n >>> ').lower()
-
-                    speak('Opening the song on Spotify.')
-                    webbrowser.open(spotify_url + spotify_search)
-                    speak('Now you can play your song')
-                else:
-                    speak('Please check your spelling.')
-                    print()
-                    speak('Type "music" again to restart.')
-            print()
-
-        elif 'date' in user_query:
-            print()
-            date = date.today()
-            speak(date)
-            print()
-
-        elif 'open chrome' in user_query:  # You'll have to download google chrome first on your desktop/pc.
-            print()
+        elif 'chrome' in user_query:  # You'll have to download google chrome first on your desktop/pc.
             try:
                 chrome_path = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
                 os.startfile(chrome_path)
-                speak('Chrome opened.')
+                self.speak('Opening Chrome')
             except Exception:
-                speak('No Google Chrome installation found on the host device.')
+                self.speak('No Google Chrome installation found on the host device.')
 
-        elif 'open notepad' in user_query:
-            print()
-            notepad_path = 'C:\\Windows\\system32\\notepad.exe'
-            os.startfile(notepad_path)
-            speak('Notepad opened.')
-            print()
-
-        elif 'open cmd' in user_query:
-            print()
+        elif 'cmd' in user_query:
             cmd_path = 'C:\\Windows\\system32\\cmd.exe'
             os.startfile(cmd_path)
-            speak('Command Prompt opened.')
-            print()
+            self.speak('Opening Command Prompt.')
 
-        elif 'open control panel' in user_query:
-            print()
+        elif 'control panel' in user_query:
+
             cp_path = 'C:\\Windows\\system32\\control.exe'
             os.startfile(cp_path)
-            speak('Control Panel opened.')
-            print()
+            self.speak('Opening Control Panel.')
 
         elif 'bye' in user_query or 'goodbye' in user_query or 'good night' in user_query or 'see you later' in user_query:
-            print()
-            speak(random.choice(bye))
+            self.speak(random.choice(self.bye))
             sys.exit()
 
         elif 'hello' in user_query or 'hi' in user_query:
-            print()
-            speak(random.choice(hello))
-            print()
+            self.speak(random.choice(self.hello))
 
         elif 'joke' in user_query:
-            print()
-            speak(pyjokes.get_joke())
-            print()
-
-        elif 'open calculator' in user_query or 'calculator' in user_query:
-            print()
-            speak('Opening Calculator.')
-            print()
-            import calculator
-
-            print()
-
-        elif 'news' in user_query:
-            print()
-            speak('Opening News.')
-            print()
-            import news
-
-            print()
-
-        elif 'weather' in user_query:
-            print()
-            speak('Opening Weather.')
-            print()
-            import weather
-
-            print()
-
-        elif 'games' in user_query:
-            print()
-            speak('Opening GameHub.')
-            print()
-            import games
-
-            print()
-
-        elif 'translate' in user_query:
-            print()
-            speak('Opening Translate.')
-            print()
-            import translate
-
-            print()
+            self.speak(pyjokes.get_joke())
 
         elif 'who are you' in user_query:
-            print()
-            speak('I am Artigence, your artificial intelligence.')
-            print()
+            self.speak('I am Artigence, your artificial intelligence.')
 
         elif 'map' in user_query or 'maps' in user_query:
-            print()
-            speak('Opening Google Maps.')
+            self.speak('Opening Google Maps.')
             webbrowser.open("https://www.google.com/maps")
-            print()
+
+        elif 'open calculator' in user_query or 'calculator' in user_query:
+            self.calculator_func()
+
+        elif 'news' in user_query:
+            self.news_func()
+            self.speak('Welcome to News.\nThese are the latest international headlines according to BBC News Network.')
+
+        elif 'weather' in user_query:
+            self.weather_func()
+
+        elif 'games' in user_query:
+            self.games_func()
+
+        elif 'pronunciator' in user_query or 'pronounce' in user_query:
+            self.pronunciator_func()
+
+        elif 'translate' in user_query:
+            self.translate_func()
+
+        elif 'music' in user_query:
+            self.music_func()
+
+        elif 'notepad' in user_query:
+            self.notepad_func()
 
         else:
-            print()
             try:
                 question = user_query
                 app_id = 'LLQ4QY-A7K3LEL4T8'
                 client = wolframalpha.Client(app_id)
                 res = client.query(question)
                 answer = next(res.results).text
-                print(answer)
+                self.label.setText(answer)
+                self.label.adjustSize()
 
             except:
                 new = 2
@@ -396,4 +436,42 @@ if __name__ == '__main__':
                 query = user_query
                 webbrowser.open(google_url + query, new=new)
 
-            print()
+
+    # The A.I. will speak through this function
+    def speak(self, audio):
+        self.engine = pyttsx3.init('sapi5')
+        voices = self.engine.getProperty('voices')
+        self.engine.setProperty('voice', voices[1].id)
+        self.engine.setProperty('rate', 165)
+        self.label.setText(audio)
+        self.engine.say(audio)
+        self.engine.runAndWait()
+        self.label.clear()
+
+    def wish(self):
+        hour = int(datetime.now().hour)
+        if 0 <= hour < 12:
+            self.speak('Good Morning.')
+        elif 12 <= hour < 18:
+            self.speak('Good Afternoon.')
+        else:
+            self.speak('Good Evening.')
+
+        self.speak('I am Artigence.')
+        self.speak('How may I help you today')
+
+    hello = ['Kon\'nichiwa', 'Ciao', 'Hola', 'Bonjour', 'Hello', 'Hi', 'Hiya']
+    bye = ['Adios', 'Goodbye', 'Bye-Bye', 'See you next time.', 'Artigence Out.',
+           'It was nice talking to you sir. Have a nice day.']
+
+    def dark(self):
+        self.setPalette(self.palette)
+
+    def light(self):
+        self.setPalette(self.light_palette)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_win = Artigence()
+    main_win.show()
+    sys.exit(app.exec_())

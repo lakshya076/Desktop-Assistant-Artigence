@@ -1,0 +1,31 @@
+Each Version Updates
+
+Version 1.1
+1. This is the first version of Artigence including apps such as Weather, Calculator, News etc.
+
+Version 1.2.2
+1. Nothing New, Just Bug Fixes ;)
+
+Version 1.3.3
+1.  Now you have to login or register to enjoy Atrigence's services.
+2.  All the profiles stored in database in the cloud. So every user is authenticated before he/she is logged in.
+3.  Command color changed.
+4.  Flexible and dynamic typing {meaning now you can type in any case (lower case, upper case or mixed case)}
+5.  Minor and major Bug Fixes.
+7.  Music flexibility (now you can play music on either your pc or on the web on Spotify or Gaana.)
+8.  New feature in calculator: Now you can also calculate powers.
+9.  New Feature in Weather: Now you can view weather in celsius and fahrenheit unit.
+10. Snake game has been removed. Only pong game is available as the default built-in game.
+
+
+Version 1.4.0
+1. A flexible interactive GUI (Graphical User Interface).
+2. No Command Line commands.
+3. No Login or Register. From this version on, anyone can use Artigence without login or registering.
+
+Version 1.4.1 (Present Version)
+1. Now you can see Date in MenuBar (the top bar)
+2. NEW APP: Notepad (made by me not Windows' notepad)
+3. NEW APP: Pronunciator (Type in a word and know how to pronounce it)
+4. THREE NEW GAMES: Snake, Tic-Tac-Toe and Connect 4
+5. Access all the apps using Apps menu at the top
