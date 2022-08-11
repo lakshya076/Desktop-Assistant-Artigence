@@ -1,5 +1,5 @@
 # Desktop Assistant: Artigence
-As the name of the repository suggests, this is a Desktop Assistant made in python.
+This is a Desktop Assistant made in python.
 
 Features: 
 Calculator, 
